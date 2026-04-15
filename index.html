@@ -310,13 +310,18 @@ const cleaned = text.replace(/```json|```/gi,"").trim();
 const match = cleaned.match(/\{[\s\S]*\}/);
 if (!match) throw new Error("No JSON found:\n" + cleaned.slice(0,300));
 const parsed = JSON.parse(match[0]);
-const sources = (data.content||[])
-  .filter(b=>b.type==="tool_result" || (b.type==="tool_use" && b.name==="web_search"))
-  .flatMap(b=>{
-    try { const r = JSON.parse(typeof b.content==="string" ? b.content : JSON.stringify(b.content||"")); return r.results||[]; } catch(e){ return []; }
-  })
-  .filter(s=>s.url)
-  .slice(0,5);
+const sources = [];
+(data.content||[]).forEach(b => {
+  try {
+    if (b.type === "tool_result") {
+      const content = Array.isArray(b.content) ? b.content.map(c=>c.text||"").join("") : (b.content||"");
+      const parsed = JSON.parse(content);
+      if (parsed.results) parsed.results.forEach(r => { if (r.url) sources.push(r); });
+    }
+    if (b.type === "web_search_result" && b.url) sources.push(b);
+  } catch(e) {}
+});
+sources.splice(5);
 parsed._sources = sources;
 state.results[clusterId] = parsed;
     } catch(err) {
