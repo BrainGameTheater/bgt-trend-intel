@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BGT Trend Intel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #F9FAFB; min-height: 100vh; }
+    header { background: #fff; border-bottom: 1px solid #E5E7EB; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .header-title { font-weight: 700; font-size: 16px; color: #111; }
+    .header-sub { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .last-run { font-size: 12px; color: #9CA3AF; }
+    button { border: none; cursor: pointer; border-radius: 8px; font-family: inherit; font-weight: 600; font-size: 13px; padding: 7px 14px; }
+    #btn-run-all { background: #111; color: #fff; }
+    #btn-run-all:disabled { background: #9CA3AF; cursor: not-allowed; }
+    #btn-copy-all { background: #F3F4F6; color: #374151; }
+    .main { max-width: 760px; margin: 0 auto; padding: 20px 16px; }
+    .notice { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 10px 14px; margin-bottom: 20px; font-size: 13px; color: #1E40AF; }
+    .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .card-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; background: #FAFAFA; }
+    .card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: #111; }
+    .card-icon { font-size: 18px; }
+    .card-actions { display: flex; gap: 8px; }
+    .btn-copy { background: #F3F4F6; color: #374151; font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 6px; }
+    .btn-run { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; color: #fff; }
+    .btn-run:disabled { background: #E5E7EB !important; color: #9CA3AF; cursor: not-allowed; }
+    .card-body { padding: 16px; }
+    .placeholder { text-align: center; padding: 24px; color: #D1D5DB; font-size: 14px; }
+    .scanning { text-align: center; padding: 24px; color: #9CA3AF; font-size: 14px; }
+    .summary { font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #F3F4F6; }
+    .section-label { font-size: 11px; font-weight: 700; color: #9CA3AF; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+    .trend-card { border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border: 1px solid; }
+    .trend-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .trend-title { font-weight: 600; font-size: 14px; color: #111; line-height: 1.4; }
+    .badge { color: #fff; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+    .trend-angle { font-size: 13px; color: #555; margin-top: 5px; line-height: 1.5; }
+    .idea-row { font-size: 13px; color: #374151; padding: 7px 0; border-bottom: 1px solid #F9FAFB; line-height: 1.5; display: flex; gap: 8px; }
+    .idea-arrow { color: #D1D5DB; }
+    .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .keyword { background: #F3F4F6; color: #374151; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; }
+    .error-box { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; padding: 12px; font-size: 12px; color: #7F1D1D; font-family: monospace; word-break: break-all; white-space: pre-wrap; }
+    .section { margin-bottom: 14px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .pulsing { animation: pulse 1.5s infinite; }
+
+    /* Login screen */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #F9FAFB;
+    }
+    .login-box {
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 360px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .login-icon { font-size: 36px; margin-bottom: 12px; }
+    .login-title { font-weight: 700; font-size: 18px; color: #111; margin-bottom: 4px; }
+    .login-sub { font-size: 13px; color: #9CA3AF; margin-bottom: 24px; }
+    .login-label { font-size: 12px; font-weight: 600; color: #374151; text-align: left; display: block; margin-bottom: 6px; }
+    .login-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .login-input:focus { border-color: #111; }
+    .login-error { color: #DC2626; font-size: 12px; margin-bottom: 10px; min-height: 16px; }
+    .login-btn {
+      width: 100%;
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 4px;
+    }
+    .login-hint { font-size: 11px; color: #9CA3AF; margin-top: 16px; line-height: 1.5; }
+    .login-hint a { color: #6B7280; }
+    #app-screen { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-icon">🗂</div>
+    <div class="login-title">BGT Trend Intel</div>
+    <div class="login-sub">Brain Game Theater</div>
+
+    <label class="login-label" for="pw-input">Password</label>
+    <input id="pw-input" class="login-input" type="password" placeholder="Enter password"
+      style="font-family: inherit;"
+      onkeydown="if(event.key==='Enter') document.getElementById('key-input').focus()" />
+
+    <label class="login-label" for="key-input">Anthropic API Key</label>
+    <input id="key-input" class="login-input" type="password" placeholder="sk-ant-..."
+      onkeydown="if(event.key==='Enter') login()" />
+
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="login()">Enter</button>
+    <div class="login-hint">
+      Your API key is never saved or stored.<br>
+      Get one at <a href="https://platform.anthropic.com" target="_blank">platform.anthropic.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-screen">
+  <header>
+    <div>
+      <div class="header-title">🗂 BGT Trend Intel</div>
+      <div class="header-sub">Brain Game Theater · Live Web Search</div>
+    </div>
+    <div class="header-actions">
+      <span class="last-run" id="last-run"></span>
+      <button id="btn-copy-all" onclick="copyAll()" style="display:none">📋 Copy All</button>
+      <button id="btn-run-all" onclick="runAll()">▶ Run All</button>
+    </div>
+  </header>
+  <div class="main">
+    <div id="cards"></div>
+  </div>
+</div>
+
+<script>
+  const CORRECT_PASSWORD = "brainy2026";
+  let API_KEY = "";
+
+  function login() {
+    const pw = document.getElementById("pw-input").value.trim();
+    const key = document.getElementById("key-input").value.trim();
+    const err = document.getElementById("login-error");
+
+    if (pw !== CORRECT_PASSWORD) {
+      err.textContent = "Incorrect password.";
+      setTimeout(() => err.textContent = "", 3000);
+      return;
+    }
+    if (!key || !key.startsWith("sk-ant-")) {
+      err.textContent = "Please enter a valid Anthropic API key.";
+      setTimeout(() => err.textContent = "", 3000);
+      return;
+    }
+
+    API_KEY = key;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "block";
+    initApp();
+  }
+
+  const CLUSTERS = [
+    {
+      id: "puzzle_trends",
+      label: "Puzzle & Brain Game Trends",
+      icon: "🧩",
+      color: "#D97706",
+      prompt: `Search for the latest trending topics and viral content around: brain games, logic puzzles, IQ puzzles, Kanoodle, SmartGames, puzzle solving on YouTube and TikTok. After searching, return ONLY a raw JSON object with no other text: { "summary": "2-sentence overview", "trends": [{ "title": "trend name", "angle": "how Riley can use this for BGT", "urgency": "high" }, { "title": "trend name", "angle": "how Riley can use this", "urgency": "medium" }, { "title": "trend name", "angle": "how Riley can use this", "urgency": "low" }], "content_ideas": ["specific video idea 1", "specific video idea 2", "specific video idea 3"], "keywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }`
+    },
+    {
+      id: "brain_health",
+      label: "Cognitive Health & TBI News",
+      icon: "🧠",
+      color: "#7C3AED",
+      prompt: `Search for latest news and research around: brain health, neuroplasticity, cognitive training, TBI recovery, dementia prevention, senior brain fitness, brain games for adults. After searching, return ONLY a raw JSON object with no other text: { "summary": "2-sentence overview", "trends": [{ "title": "trend name", "angle": "how Riley can connect this to his TBI recovery story and BGT content", "urgency": "high" }, { "title": "trend name", "angle": "how Riley can use this", "urgency": "medium" }, { "title": "trend name", "angle": "how Riley can use this", "urgency": "low" }], "content_ideas": ["specific video idea 1", "specific video idea 2", "specific video idea 3"], "keywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }`
+    },
+    {
+      id: "competitor_intel",
+      label: "Competitor & Market Intel",
+      icon: "🔍",
+      color: "#059669",
+      prompt: `Search for recent activity around: SmartGames puzzles, ThinkFun games, Kanoodle, IQ Puzzler Pro, brain teaser YouTube channels, puzzle influencers, affiliate puzzle sales on Walmart and Amazon. After searching, return ONLY a raw JSON object with no other text: { "summary": "2-sentence overview", "trends": [{ "title": "competitor or market observation", "angle": "specific opportunity or gap Riley can exploit", "urgency": "high" }, { "title": "observation", "angle": "opportunity for Riley", "urgency": "medium" }, { "title": "observation", "angle": "opportunity for Riley", "urgency": "low" }], "content_ideas": ["specific strategy idea 1", "specific strategy idea 2", "specific strategy idea 3"], "keywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }`
+    },
+    {
+      id: "social_angles",
+      label: "Social & TikTok Angles",
+      icon: "📱",
+      color: "#DC2626",
+      prompt: `Search for trending social media formats around: puzzle TikTok, brain game challenges, satisfying puzzle videos, cozy gaming content, anti-brain rot, brainmaxxing. What hooks and formats are going viral right now? After searching, return ONLY a raw JSON object with no other text: { "summary": "2-sentence overview", "trends": [{ "title": "trend name", "angle": "specific hook or format Riley can use for BGT Shorts or TikTok", "urgency": "high" }, { "title": "trend name", "angle": "how Riley can adapt this", "urgency": "medium" }, { "title": "trend name", "angle": "how Riley can adapt this", "urgency": "low" }], "content_ideas": ["specific Short or TikTok concept with hook", "specific concept", "specific concept"], "keywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }`
+    },
+    {
+      id: "affiliate_commerce",
+      label: "Affiliate & Commerce Trends",
+      icon: "💰",
+      color: "#B45309",
+      prompt: `Search for: trending gift guide keywords, brain game gift searches 2026, educational toy trends, what is selling on Walmart and Amazon in puzzles and brain games, upcoming seasonal shopping moments. After searching, return ONLY a raw JSON object with no other text: { "summary": "2-sentence overview", "trends": [{ "title": "trend or opportunity", "angle": "specific affiliate content angle or keyword Riley should target on Walmart", "urgency": "high" }, { "title": "trend", "angle": "affiliate angle for Riley", "urgency": "medium" }, { "title": "trend", "angle": "affiliate angle for Riley", "urgency": "low" }], "content_ideas": ["specific affiliate-driven video idea 1", "specific idea 2", "specific idea 3"], "keywords": ["keyword1", "keyword2", "keyword3", "keyword4"] }`
+    }
+  ];
+
+  const URGENCY = {
+    high:   { bg: "#FEF2F2", border: "#FCA5A5", badge: "#DC2626", label: "HOT" },
+    medium: { bg: "#FFFBEB", border: "#FCD34D", badge: "#D97706", label: "WARM" },
+    low:    { bg: "#F0FDF4", border: "#86EFAC", badge: "#16A34A", label: "WATCH" }
+  };
+
+  const state = { results: {}, loading: {} };
+
+  function esc(str) {
+    return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  function renderTrendCard(trend) {
+    const u = URGENCY[trend.urgency] || URGENCY.low;
+    return `<div class="trend-card" style="background:${u.bg};border-color:${u.border}">
+      <div class="trend-top">
+        <div class="trend-title">${esc(trend.title)}</div>
+        <span class="badge" style="background:${u.badge}">${u.label}</span>
+      </div>
+      <div class="trend-angle">${esc(trend.angle)}</div>
+    </div>`;
+  }
+
+  function renderCardBody(cluster) {
+    const result = state.results[cluster.id];
+    const isLoading = state.loading[cluster.id];
+    if (isLoading) return `<div class="scanning">Searching the web...</div>`;
+    if (!result) return `<div class="placeholder">Hit Run to fetch this cluster</div>`;
+    if (result._error) return `<div class="error-box">${esc(result._error)}</div>`;
+    return `
+      <p class="summary">${esc(result.summary)}</p>
+      <div class="section">
+        <div class="section-label">Trend Signals</div>
+        ${(result.trends||[]).map(renderTrendCard).join("")}
+      </div>
+      <div class="section">
+        <div class="section-label">Content Ideas</div>
+        ${(result.content_ideas||[]).map(i=>`<div class="idea-row"><span class="idea-arrow">-&gt;</span><span>${esc(i)}</span></div>`).join("")}
+      </div>
+      <div class="section">
+        <div class="section-label">Keywords</div>
+        <div class="keywords">${(result.keywords||[]).map(k=>`<span class="keyword">${esc(k)}</span>`).join("")}</div>
+      </div>`;
+  }
+
+  function renderCard(cluster) {
+    const result = state.results[cluster.id];
+    const isLoading = state.loading[cluster.id];
+    const hasResult = result && !result._error;
+    return `<div class="card" id="card-${cluster.id}">
+      <div class="card-header">
+        <div class="card-title"><span class="card-icon">${cluster.icon}</span>${esc(cluster.label)}</div>
+        <div class="card-actions">
+          ${hasResult ? `<button class="btn-copy" onclick="copyCluster('${cluster.id}', this)">Copy</button>` : ""}
+          <button class="btn-run" style="background:${isLoading?"#E5E7EB":cluster.color}" ${isLoading?"disabled":""} onclick="runCluster('${cluster.id}')">
+            ${isLoading ? "Scanning..." : result ? "Refresh" : "Run"}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" id="body-${cluster.id}">${renderCardBody(cluster)}</div>
+    </div>`;
+  }
+
+  function refreshCard(clusterId) {
+    const cluster = CLUSTERS.find(c => c.id === clusterId);
+    const old = document.getElementById("card-" + clusterId);
+    if (old) old.outerHTML = renderCard(cluster);
+  }
+
+  async function runCluster(clusterId) {
+    const cluster = CLUSTERS.find(c => c.id === clusterId);
+    state.loading[clusterId] = true;
+    refreshCard(clusterId);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          system: "You are a trend analyst for Brain Game Theater, a YouTube puzzle channel. Use web_search to find current trends. Return ONLY a raw JSON object - no markdown, no explanation, just JSON.",
+          messages: [{ role: "user", content: cluster.prompt }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.type + ": " + data.error.message);
+      const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+      if (!text) throw new Error("No text returned. stop_reason=" + data.stop_reason);
+      const cleaned = text.replace(/```json|```/gi,"").trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON found:\n" + cleaned.slice(0,300));
+      state.results[clusterId] = JSON.parse(match[0]);
+    } catch(err) {
+      state.results[clusterId] = { _error: err.message };
+    }
+    state.loading[clusterId] = false;
+    refreshCard(clusterId);
+    document.getElementById("last-run").textContent = "Last run: " + new Date().toLocaleTimeString();
+    document.getElementById("btn-copy-all").style.display = "inline-block";
+  }
+
+  async function runAll() {
+    const btn = document.getElementById("btn-run-all");
+    btn.disabled = true;
+    btn.textContent = "Scanning...";
+    btn.classList.add("pulsing");
+    for (const cluster of CLUSTERS) await runCluster(cluster.id);
+    btn.disabled = false;
+    btn.textContent = "Run All";
+    btn.classList.remove("pulsing");
+  }
+
+  function copyCluster(clusterId, btn) {
+    const cluster = CLUSTERS.find(c => c.id === clusterId);
+    const r = state.results[clusterId];
+    if (!r || r._error) return;
+    const text = [cluster.label, "", r.summary, "", "TRENDS:",
+      ...(r.trends||[]).map(t=>"- [" + (t.urgency||"").toUpperCase() + "] " + t.title + " -- " + t.angle),
+      "", "CONTENT IDEAS:", ...(r.content_ideas||[]).map(i=>"- " + i),
+      "", "KEYWORDS: " + (r.keywords||[]).join(", ")
+    ].join("\n");
+    navigator.clipboard.writeText(text);
+    btn.textContent = "Copied";
+    setTimeout(function() { btn.textContent = "Copy"; }, 2000);
+  }
+
+  function copyAll() {
+    const lines = ["BGT TREND INTEL -- " + new Date().toLocaleString(), ""];
+    CLUSTERS.forEach(function(c) {
+      const r = state.results[c.id];
+      if (!r || r._error) return;
+      lines.push("\n" + c.icon + " " + c.label.toUpperCase());
+      lines.push(r.summary||"");
+      lines.push("\nTRENDS:");
+      (r.trends||[]).forEach(function(t){ lines.push("- [" + (t.urgency||"").toUpperCase() + "] " + t.title + " -- " + t.angle); });
+      lines.push("\nCONTENT IDEAS:");
+      (r.content_ideas||[]).forEach(function(i){ lines.push("- " + i); });
+      lines.push("\nKEYWORDS: " + (r.keywords||[]).join(", "));
+    });
+    navigator.clipboard.writeText(lines.join("\n"));
+    const btn = document.getElementById("btn-copy-all");
+    btn.textContent = "Copied!";
+    setTimeout(function() { btn.textContent = "Copy All"; }, 2000);
+  }
+
+  function initApp() {
+    document.getElementById("cards").innerHTML = CLUSTERS.map(renderCard).join("");
+  }
+</script>
+
+</body>
+</html>
